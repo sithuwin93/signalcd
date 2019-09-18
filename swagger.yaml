@@ -17,6 +17,21 @@ consumes:
 produces:
   - application/json
 paths:
+  /agents:
+    get:
+      tags:
+        - "agents"
+      summary: "Returns a list of agents"
+      operationId: "agents"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/agent"
+        500:
+          description: "internal server error"
   /deployments:
     get:
       tags:
@@ -116,6 +131,15 @@ paths:
         500:
           description: "internal server error"
 definitions:
+  agent:
+    required:
+      - name
+    properties:
+      name:
+        type: string
+      ready:
+        type: boolean
+        default: false
   deployment:
     required:
       - number

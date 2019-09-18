@@ -11,6 +11,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
+	"github.com/signalcd/signalcd/api/v1/client/agents"
 	"github.com/signalcd/signalcd/api/v1/client/deployments"
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
 )
@@ -57,6 +58,8 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *SignalCDSw
 
 	cli := new(SignalCDSwaggerSpec)
 	cli.Transport = transport
+
+	cli.Agents = agents.New(transport, formats)
 
 	cli.Deployments = deployments.New(transport, formats)
 
@@ -106,6 +109,8 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // SignalCDSwaggerSpec is a client for signal c d swagger spec
 type SignalCDSwaggerSpec struct {
+	Agents *agents.Client
+
 	Deployments *deployments.Client
 
 	Pipeline *pipeline.Client
@@ -116,6 +121,8 @@ type SignalCDSwaggerSpec struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *SignalCDSwaggerSpec) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
+
+	c.Agents.SetTransport(transport)
 
 	c.Deployments.SetTransport(transport)
 

@@ -11,6 +11,7 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 
 	"github.com/signalcd/signalcd/api/v1/restapi/operations"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/agents"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
@@ -35,6 +36,11 @@ func configureAPI(api *operations.CdAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	if api.AgentsAgentsHandler == nil {
+		api.AgentsAgentsHandler = agents.AgentsHandlerFunc(func(params agents.AgentsParams) middleware.Responder {
+			return middleware.NotImplemented("operation agents.Agents has not yet been implemented")
+		})
+	}
 	if api.PipelineCreateHandler == nil {
 		api.PipelineCreateHandler = pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Create has not yet been implemented")

@@ -19,6 +19,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/agents"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
@@ -40,6 +41,9 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
+		AgentsAgentsHandler: agents.AgentsHandlerFunc(func(params agents.AgentsParams) middleware.Responder {
+			return middleware.NotImplemented("operation AgentsAgents has not yet been implemented")
+		}),
 		PipelineCreateHandler: pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
 			return middleware.NotImplemented("operation PipelineCreate has not yet been implemented")
 		}),
@@ -89,6 +93,8 @@ type CdAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
+	// AgentsAgentsHandler sets the operation handler for the agents operation
+	AgentsAgentsHandler agents.AgentsHandler
 	// PipelineCreateHandler sets the operation handler for the create operation
 	PipelineCreateHandler pipeline.CreateHandler
 	// DeploymentsCurrentDeploymentHandler sets the operation handler for the current deployment operation
@@ -162,6 +168,10 @@ func (o *CdAPI) Validate() error {
 
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.AgentsAgentsHandler == nil {
+		unregistered = append(unregistered, "agents.AgentsHandler")
 	}
 
 	if o.PipelineCreateHandler == nil {
@@ -285,6 +295,11 @@ func (o *CdAPI) initHandlerCache() {
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/agents"] = agents.NewAgents(o.context, o.AgentsAgentsHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)

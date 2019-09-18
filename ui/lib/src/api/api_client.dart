@@ -37,6 +37,8 @@ class ApiClient {
           return value is bool ? value : '$value'.toLowerCase() == 'true';
         case 'double':
           return value is double ? value : double.parse('$value');
+        case 'Agent':
+          return new Agent.fromJson(value);
         case 'Check':
           return new Check.fromJson(value);
         case 'CheckEnvironment':

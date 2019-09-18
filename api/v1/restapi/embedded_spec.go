@@ -38,6 +38,29 @@ func init() {
   "host": "localhost:6660",
   "basePath": "/api/v1",
   "paths": {
+    "/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Returns a list of agents",
+        "operationId": "agents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/agent"
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error"
+          }
+        }
+      }
+    },
     "/deployments": {
       "get": {
         "tags": [
@@ -191,6 +214,20 @@ func init() {
     }
   },
   "definitions": {
+    "agent": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "ready": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
     "check": {
       "required": [
         "name",
@@ -352,6 +389,29 @@ func init() {
   "host": "localhost:6660",
   "basePath": "/api/v1",
   "paths": {
+    "/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Returns a list of agents",
+        "operationId": "agents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/agent"
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error"
+          }
+        }
+      }
+    },
     "/deployments": {
       "get": {
         "tags": [
@@ -505,6 +565,20 @@ func init() {
     }
   },
   "definitions": {
+    "agent": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "ready": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
     "check": {
       "required": [
         "name",
