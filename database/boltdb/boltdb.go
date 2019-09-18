@@ -3,6 +3,7 @@ package boltdb
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ import (
 const (
 	bucketDeployments = `deployments`
 	bucketPipelines   = `pipelines`
+	bucketAgents      = `agents`
 )
 
 // BoltDB has a connection to the database and implements the needed interfaces.
@@ -32,7 +34,12 @@ func New(path string) (*BoltDB, func() error, error) {
 	}
 
 	err = db.Batch(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(bucketDeployments))
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketAgents))
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists([]byte(bucketDeployments))
 		if err != nil {
 			return err
 		}
@@ -218,6 +225,26 @@ func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 	return pipelines, err
 }
 
+func (bdb *BoltDB) ListAgents() ([]signalcd.Agent, error) {
+	var agents []signalcd.Agent
+
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketAgents))
+		c := b.Cursor()
+
+		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+			var a signalcd.Agent
+			if err := json.Unmarshal(v, &a); err != nil {
+				return err
+			}
+			agents = append(agents, a)
+		}
+		return nil
+	})
+
+	return agents, err
+}
+
 // CreatePipeline saves a Pipeline and returns the saved Pipeline
 func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error) {
 	p.ID = uuid.New().String()
@@ -233,4 +260,17 @@ func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error
 	})
 
 	return p, err
+}
+
+func (bdb *BoltDB) SetAgentStatus(ctx context.Context, agent signalcd.Agent) error {
+	return bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketAgents))
+
+		value, err := json.Marshal(agent)
+		if err != nil {
+			return fmt.Errorf("failed to marshal agent: %w", err)
+		}
+
+		return b.Put([]byte(agent.Name), value)
+	})
 }

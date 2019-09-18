@@ -1,6 +1,9 @@
 package api
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
@@ -101,4 +104,24 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 	}
 
 	return &signalcdproto.SetDeploymentStatusResponse{}, nil
+}
+
+type AgentStatusSetter interface {
+	SetAgentStatus(ctx context.Context, agent signalcd.Agent) error
+}
+
+func (r *RPC) AgentStatus(ctx context.Context, req *signalcdproto.AgentStatusRequest) (*signalcdproto.AgentStatusResponse, error) {
+	if req.GetName() == "" {
+		return &signalcdproto.AgentStatusResponse{}, fmt.Errorf("agent needs a name")
+	}
+
+	agent := signalcd.Agent{
+		Name:      req.GetName(),
+		Heartbeat: time.Now().UTC(),
+	}
+
+	fmt.Printf("%+v\n", agent)
+
+	err := r.DB.SetAgentStatus(ctx, agent)
+	return &signalcdproto.AgentStatusResponse{}, err
 }

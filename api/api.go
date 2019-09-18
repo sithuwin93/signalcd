@@ -16,6 +16,7 @@ import (
 	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/api/v1/restapi"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/agents"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 	"github.com/signalcd/signalcd/signalcd"
@@ -30,6 +31,8 @@ type SignalDB interface {
 	CurrentDeploymentSetter
 	PipelinesLister
 	PipelineCreator
+	AgentsLister
+	AgentStatusSetter
 }
 
 // Events to Deployments that should be sent via SSE (Server Sent Events)
@@ -57,6 +60,7 @@ func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
 		return restmiddleware.Spec("", swaggerSpec.Raw(), api.Context().RoutesHandler(b))
 	}
 
+	api.AgentsAgentsHandler = getAgentsHandler(db)
 	api.DeploymentsDeploymentsHandler = getDeploymentsHandler(db)
 	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler(db)
 	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
@@ -155,6 +159,31 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 	}
 
 	return mp
+}
+
+type AgentsLister interface {
+	ListAgents() ([]signalcd.Agent, error)
+}
+
+func getAgentsHandler(lister AgentsLister) agents.AgentsHandlerFunc {
+	return func(params agents.AgentsParams) restmiddleware.Responder {
+		as, err := lister.ListAgents()
+		if err != nil {
+			return agents.NewAgentsInternalServerError()
+		}
+
+		var payload []*models.Agent
+
+		for _, a := range as {
+			ready := a.Ready()
+			payload = append(payload, &models.Agent{
+				Name:  &a.Name,
+				Ready: &ready,
+			})
+		}
+
+		return agents.NewAgentsOK().WithPayload(payload)
+	}
 }
 
 // PipelinesLister returns a list of Pipelines
