@@ -71,6 +71,10 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 		if namespace == "" {
 			return errors.New("no namespace given, use --namespace flag")
 		}
+		apiURL := c.String("api.url")
+		if apiURL == "" {
+			return errors.New("no api.url given")
+		}
 
 		conn, err := grpc.Dial(c.String("api.url"), grpc.WithInsecure())
 		if err != nil {
@@ -120,6 +124,25 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 				return u.pollLoop(ctx)
 			}, func(err error) {
 				cancel()
+			})
+		}
+		{
+			gr.Add(func() error {
+				ticker := time.NewTicker(5 * time.Second)
+
+				for {
+					select {
+					case <-ctx.Done():
+						return nil
+					case <-ticker.C:
+						req := &signalcdproto.AgentStatusRequest{Name: c.String("name")}
+						_, err := client.AgentStatus(ctx, req)
+						if err != nil {
+							level.Warn(logger).Log("msg", "failed to send agent status", "err", err)
+						}
+					}
+				}
+			}, func(err error) {
 			})
 		}
 		{
