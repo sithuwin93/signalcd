@@ -175,9 +175,10 @@ func getAgentsHandler(lister AgentsLister) agents.AgentsHandlerFunc {
 		var payload []*models.Agent
 
 		for _, a := range as {
+			name := a.Name
 			ready := a.Ready()
 			payload = append(payload, &models.Agent{
-				Name:  &a.Name,
+				Name:  &name,
 				Ready: &ready,
 			})
 		}

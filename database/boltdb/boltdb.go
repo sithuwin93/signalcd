@@ -232,7 +232,7 @@ func (bdb *BoltDB) ListAgents() ([]signalcd.Agent, error) {
 		b := tx.Bucket([]byte(bucketAgents))
 		c := b.Cursor()
 
-		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var a signalcd.Agent
 			if err := json.Unmarshal(v, &a); err != nil {
 				return err

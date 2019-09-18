@@ -120,8 +120,6 @@ func (r *RPC) AgentStatus(ctx context.Context, req *signalcdproto.AgentStatusReq
 		Heartbeat: time.Now().UTC(),
 	}
 
-	fmt.Printf("%+v\n", agent)
-
 	err := r.DB.SetAgentStatus(ctx, agent)
 	return &signalcdproto.AgentStatusResponse{}, err
 }
