@@ -1,0 +1,13 @@
+<div class="columns">
+    <div class="column card" *ngFor="let agent of agents">
+        <div class="card-content">
+            <span class="icon has-text-danger" style="display: inline;" *ngIf="agent.ready == false">
+                <i class="fas fa-2x fa-heartbeat"></i>
+            </span>
+            <span class="icon has-text-success" style="display: inline;" *ngIf="agent.ready == true">
+                <i class="fas fa-2x fa-heartbeat"></i>
+            </span>
+            {{ agent.name }}
+        </div>
+    </div>
+</div>
