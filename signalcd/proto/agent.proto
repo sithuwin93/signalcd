@@ -19,7 +19,7 @@ option go_package = "signalcdproto";
 service AgentService {
     rpc CurrentDeployment (CurrentDeploymentRequest) returns (CurrentDeploymentResponse);
     rpc SetDeploymentStatus (SetDeploymentStatusRequest) returns (SetDeploymentStatusResponse);
-    rpc StepLogs (StepLogsRequest) returns (StepLogsResponse);
+    rpc StepStatus (StepStatusRequest) returns (StepStatusResponse);
 }
 
 message Deployment {
@@ -79,11 +79,21 @@ message Check {
     int64 duration = 4;
 }
 
-message StepLogsRequest {
-    int64 number = 1;
+message StepStatusRequest {
+    enum Phase {
+        UNKNOWN = 0;
+        SUCCESS = 1;
+        FAILURE = 2;
+        PROGRESS = 3;
+        PENDING = 4;
+        KILLED = 5;
+    }
+
+    int64 deployment = 1;
     int64 step = 2;
-    bytes logs = 3;
+    Phase phase = 3;
+    bytes logs = 4;
 }
 
-message StepLogsResponse {
+message StepStatusResponse {
 }

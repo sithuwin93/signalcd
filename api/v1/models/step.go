@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -115,12 +117,122 @@ func (m *Step) UnmarshalBinary(b []byte) error {
 // swagger:model StepStatus
 type StepStatus struct {
 
+	// finished
+	// Format: date-time
+	Finished strfmt.DateTime `json:"finished,omitempty"`
+
 	// logs
 	Logs string `json:"logs,omitempty"`
+
+	// phase
+	// Enum: [unknown success failure progress pending killed]
+	Phase string `json:"phase,omitempty"`
+
+	// started
+	// Format: date-time
+	Started strfmt.DateTime `json:"started,omitempty"`
 }
 
 // Validate validates this step status
 func (m *StepStatus) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateFinished(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePhase(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStarted(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *StepStatus) validateFinished(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Finished) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("status"+"."+"finished", "body", "date-time", m.Finished.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var stepStatusTypePhasePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["unknown","success","failure","progress","pending","killed"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		stepStatusTypePhasePropEnum = append(stepStatusTypePhasePropEnum, v)
+	}
+}
+
+const (
+
+	// StepStatusPhaseUnknown captures enum value "unknown"
+	StepStatusPhaseUnknown string = "unknown"
+
+	// StepStatusPhaseSuccess captures enum value "success"
+	StepStatusPhaseSuccess string = "success"
+
+	// StepStatusPhaseFailure captures enum value "failure"
+	StepStatusPhaseFailure string = "failure"
+
+	// StepStatusPhaseProgress captures enum value "progress"
+	StepStatusPhaseProgress string = "progress"
+
+	// StepStatusPhasePending captures enum value "pending"
+	StepStatusPhasePending string = "pending"
+
+	// StepStatusPhaseKilled captures enum value "killed"
+	StepStatusPhaseKilled string = "killed"
+)
+
+// prop value enum
+func (m *StepStatus) validatePhaseEnum(path, location string, value string) error {
+	if err := validate.Enum(path, location, value, stepStatusTypePhasePropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *StepStatus) validatePhase(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Phase) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validatePhaseEnum("status"+"."+"phase", "body", m.Phase); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *StepStatus) validateStarted(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Started) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("status"+"."+"started", "body", "date-time", m.Started.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

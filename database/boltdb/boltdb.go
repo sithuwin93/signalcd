@@ -176,8 +176,8 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	return d, err
 }
 
-// SaveStepLogs saves the logs for a Deployment step by its number
-func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment, step int64, logs []byte) error {
+// SetStepStatus saves the logs for a Deployment step by its number
+func (bdb *BoltDB) SetStepStatus(ctx context.Context, deployment, step int64, status signalcd.Status) error {
 	var d signalcd.Deployment
 
 	return bdb.db.Update(func(tx *bolt.Tx) error {
@@ -197,7 +197,18 @@ func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment, step int64, log
 			d.Pipeline.Steps[step].Status = &signalcd.Status{}
 		}
 
-		d.Pipeline.Steps[step].Status.Logs = logs
+		d.Pipeline.Steps[step].Status.Phase = status.Phase
+
+		switch status.Phase {
+		case signalcd.Progress:
+			d.Pipeline.Steps[step].Status.Started = time.Now().UTC()
+		case signalcd.Success, signalcd.Failure, signalcd.Killed:
+			d.Pipeline.Steps[step].Status.Finished = time.Now().UTC()
+		}
+
+		if len(status.Logs) > 0 {
+			d.Pipeline.Steps[step].Status.Logs = status.Logs
+		}
 
 		value, err := json.Marshal(d)
 		if err != nil {

@@ -183,6 +183,21 @@ definitions:
       status:
         type: object
         properties:
+          started:
+            type: string
+            format: 'date-time'
+          finished:
+            type: string
+            format: 'date-time'
+          phase:
+            type: string
+            enum:
+              - unknown
+              - success
+              - failure
+              - progress
+              - pending
+              - killed
           logs:
             type: string
   check:

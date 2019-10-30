@@ -105,17 +105,37 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 	return &signalcdproto.SetDeploymentStatusResponse{}, nil
 }
 
-// StepLogsSaver saves the logs for a Deployment step by its number
-type StepLogsSaver interface {
-	SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error
+// StepStatusSetter saves the logs for a Deployment step by its number
+type StepStatusSetter interface {
+	SetStepStatus(ctx context.Context, deployment int64, step int64, status signalcd.Status) error
 }
 
-//StepLogs saves the logs for a specific deployment and step coming from an agent
-func (r *RPC) StepLogs(ctx context.Context, req *signalcdproto.StepLogsRequest) (*signalcdproto.StepLogsResponse, error) {
-	err := r.DB.SaveStepLogs(ctx, req.GetNumber(), req.GetStep(), req.GetLogs())
+// StepStatus saves the logs for a specific deployment and step coming from an agent
+func (r *RPC) StepStatus(ctx context.Context, req *signalcdproto.StepStatusRequest) (*signalcdproto.StepStatusResponse, error) {
+	var phase signalcd.DeploymentPhase
+
+	switch req.GetPhase() {
+	case signalcdproto.StepStatusRequest_UNKNOWN:
+		phase = signalcd.Unknown
+	case signalcdproto.StepStatusRequest_SUCCESS:
+		phase = signalcd.Success
+	case signalcdproto.StepStatusRequest_FAILURE:
+		phase = signalcd.Failure
+	case signalcdproto.StepStatusRequest_PROGRESS:
+		phase = signalcd.Progress
+	case signalcdproto.StepStatusRequest_PENDING:
+		phase = signalcd.Pending
+	case signalcdproto.StepStatusRequest_KILLED:
+		phase = signalcd.Killed
+	}
+
+	err := r.DB.SetStepStatus(ctx, req.GetDeployment(), req.GetStep(), signalcd.Status{
+		Phase: phase,
+		Logs:  req.GetLogs(),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to save logs: %w", err)
 	}
 
-	return &signalcdproto.StepLogsResponse{}, nil
+	return &signalcdproto.StepStatusResponse{}, nil
 }

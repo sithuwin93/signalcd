@@ -399,6 +399,15 @@ func (u *updater) runSteps(ctx context.Context, deploymentNumber int64, p signal
 		)
 
 		if err := u.runStep(ctx, deploymentNumber, int64(i), p, s); err != nil {
+			_, err := u.client.StepStatus(ctx, &signalcdproto.StepStatusRequest{
+				Deployment: deploymentNumber,
+				Step:       int64(i),
+				Phase:      signalcdproto.StepStatusRequest_FAILURE,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to update step status: %w", err)
+			}
+
 			return fmt.Errorf("failed to run pipeline %s step %s: %w", p.Name, s.Name, err)
 		}
 	}
@@ -448,8 +457,17 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 
 	podLogger := log.With(u.logger, "namespace", u.namespace, "pod", p.Name)
 
+	_, err := u.client.StepStatus(ctx, &signalcdproto.StepStatusRequest{
+		Deployment: deploymentNumber,
+		Step:       stepNumber,
+		Phase:      signalcdproto.StepStatusRequest_PROGRESS,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update step status: %w", err)
+	}
+
 	// Clean up previous runs if the pods still exists
-	err := u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+	err = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete previous pod: %w", err)
 	}
@@ -465,10 +483,11 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 			level.Warn(podLogger).Log("msg", "failed to get pod logs", "err", err)
 		}
 
-		_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
-			Number: deploymentNumber,
-			Step:   stepNumber,
-			Logs:   logs,
+		_, err = u.client.StepStatus(ctx, &signalcdproto.StepStatusRequest{
+			Deployment: deploymentNumber,
+			Step:       stepNumber,
+			Phase:      signalcdproto.StepStatusRequest_SUCCESS,
+			Logs:       logs,
 		})
 		if err != nil {
 			level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)

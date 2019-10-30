@@ -30,7 +30,7 @@ type SignalDB interface {
 	CurrentDeploymentSetter
 	PipelinesLister
 	PipelineCreator
-	StepLogsSaver
+	StepStatusSetter
 }
 
 // Events to Deployments that should be sent via SSE (Server Sent Events)
@@ -145,7 +145,10 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 
 		if s.Status != nil {
 			ms.Status = &models.StepStatus{
-				Logs: string(s.Status.Logs),
+				Started:  strfmt.DateTime(s.Status.Started),
+				Finished: strfmt.DateTime(s.Status.Finished),
+				Phase:    getDeploymentStatusPhase(s.Status.Phase),
+				Logs:     string(s.Status.Logs),
 			}
 		}
 

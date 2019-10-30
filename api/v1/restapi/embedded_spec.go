@@ -324,8 +324,27 @@ func init() {
         "status": {
           "type": "object",
           "properties": {
+            "finished": {
+              "type": "string",
+              "format": "date-time"
+            },
             "logs": {
               "type": "string"
+            },
+            "phase": {
+              "type": "string",
+              "enum": [
+                "unknown",
+                "success",
+                "failure",
+                "progress",
+                "pending",
+                "killed"
+              ]
+            },
+            "started": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         }
@@ -646,8 +665,27 @@ func init() {
         "status": {
           "type": "object",
           "properties": {
+            "finished": {
+              "type": "string",
+              "format": "date-time"
+            },
             "logs": {
               "type": "string"
+            },
+            "phase": {
+              "type": "string",
+              "enum": [
+                "unknown",
+                "success",
+                "failure",
+                "progress",
+                "pending",
+                "killed"
+              ]
+            },
+            "started": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         }
